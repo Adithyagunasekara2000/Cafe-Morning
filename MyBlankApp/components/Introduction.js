@@ -20,9 +20,9 @@ export default function Introduction({navigation}) {
                  <TouchableOpacity style={styles.overlay1} onPress={() => navigation.navigate('Recipes')}>  
                     <Text style={styles.cat}>Recipes</Text>
                 </TouchableOpacity>
-                 <View style={styles.overlay1}>
+                <TouchableOpacity style={styles.overlay1} onPress={() => navigation.navigate('PlayList')}> 
                     <Text style={styles.cat}>Cafe music palylist</Text>
-                </View>
+                </TouchableOpacity>
             </ImageBackground>
         </View>
     );
