@@ -1,5 +1,5 @@
 import React, {  useEffect } from 'react';
-import {View,Text,StyleSheet,ImageBackground, Dimensions} from "react-native";
+import {View,Text,StyleSheet,ImageBackground, Dimensions, Touchable, TouchableOpacity} from "react-native";
 
 const {width,height}=Dimensions.get("window");
 
@@ -8,7 +8,7 @@ export default function Welcome({navigation}){
     useEffect(() => {
         const timer=setTimeout(()=>{
             navigation.replace("Introduction"); 
-        },3000);
+        },4000);
     return ()=>clearTimeout(timer); 
     },[]);
 
@@ -19,6 +19,7 @@ export default function Welcome({navigation}){
                 style={styles.backgroundImage}
                 resizeMethod='cover'
                 >
+                    
                     <View style={styles.overlay}>
                     <Text style={styles.logo}>CafeMoring ☕🌸</Text>
                 </View>
@@ -33,15 +34,15 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     backgroundImage: {
-        position: 'absolute', // lock in place
-        width: width,        // full screen width
-        height: height,      // full screen height
+        position: 'absolute', 
+        width: width,        
+        height: height,      
         justifyContent: 'center',
         alignItems: 'center',
     },
     overlay: {
-        backgroundColor: 'rgba(64, 53, 53, 0.8)', // Semi-transparent overlay
-        paddingHorizontal:80,
+        backgroundColor: 'rgba(64, 53, 53, 0.8)', 
+        paddingHorizontal:50,
         height:150,
         width:width-30,
         paddingVertical: 60,

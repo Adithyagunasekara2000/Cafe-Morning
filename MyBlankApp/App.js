@@ -9,6 +9,8 @@ import { useEffect } from 'react';
 import Aesthetic from './components/Aesthetic';
 import Recipes from './components/Recipes';
 import PlayList from './components/PlayList';
+import Registration from './components/Registration';
+import Login from './components/Login';
 
 export default function App() {
   const Stack = createNativeStackNavigator();
@@ -27,6 +29,8 @@ export default function App() {
                 <Stack.Screen name="Aesthetic" component={Aesthetic} options={{ headerShown: false }}/>
                 <Stack.Screen name="Recipes" component={Recipes} options={{headerShown:false}}/>
                 <Stack.Screen name="PlayList" component={PlayList} options={{headerShown:false}}/>  
+                <Stack.Screen name="Registration" component={Registration} options={{headerShown:false}}/>  
+               <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />                  
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

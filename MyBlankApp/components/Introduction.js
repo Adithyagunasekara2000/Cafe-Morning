@@ -9,8 +9,13 @@ export default function Introduction({navigation}) {
             <ImageBackground
                 source={require('../assets/bg.jpg')}
                 style={styles.backgroundImage}
+                 imageStyle={{ opacity: 0.8 }}
                 resizeMode='cover'
             >
+                <TouchableOpacity style={styles.overlay2} onPress={() => navigation.navigate('Registration')}>  
+                    <Text style={styles.cat}>Register</Text>
+                </TouchableOpacity>
+
                <View style={styles.overlay}>
                     <Text style={styles.logo}>CafeMoring ☕🌸</Text>
                 </View>
@@ -44,12 +49,13 @@ const styles = StyleSheet.create({
      overlay: {
        
         backgroundColor: 'rgba(64, 53, 53, 0.8)',
-        paddingHorizontal:60,
-        height:100,
+        paddingHorizontal:50,
+        height:80,
         width:width-30,
         paddingVertical: 30,
         borderRadius:8,
-        marginBottom: 40
+        marginBottom: 40,
+         marginTop:15,
     },
     logo: {
         fontSize: 25,
@@ -58,13 +64,25 @@ const styles = StyleSheet.create({
     },
     overlay1: {
         backgroundColor: 'rgba(99, 69, 62, 0.7)',
-        paddingHorizontal:90,
+        paddingHorizontal:70,
         height:100,
         width:width-30,
         paddingVertical: 30,
         borderRadius:8,
-        marginBottom:10
+        marginBottom:10,
+       
     },
+  overlay2: {
+    position: 'absolute',
+    top: 10,
+    right: 20,
+    backgroundColor: 'rgba(215, 77, 46, 0.7)',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginBottom:10,
+},
+
      cat: {
         fontSize: 20,
         color: '#0202029a',
