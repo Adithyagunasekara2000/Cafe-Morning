@@ -6,6 +6,9 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import Introduction from './components/Introduction';
 import { useEffect } from 'react';
+import Aesthetic from './components/Aesthetic';
+import Schedule from './components/Schedule';
+import Recipes from './components/Recipes';
 
 export default function App() {
   const Stack = createNativeStackNavigator();
@@ -21,6 +24,10 @@ export default function App() {
         />
         <Stack.Screen name="Introduction" component={Introduction} options={{ headerShown: false }}
         />
+                <Stack.Screen name="Aesthetic" component={Aesthetic} options={{ headerShown: false }}/>
+                <Stack.Screen name="Schedule" component={Schedule} options={{ headerShown: false }}/>
+                <Stack.Screen name="Recipes" component={Recipes} options={{headerShown:false}}/>
+
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

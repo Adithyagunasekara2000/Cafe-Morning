@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, ImageBackground, Dimensions, Text } from 'react-native';
+import { View, StyleSheet, ImageBackground, Dimensions, Text, TouchableOpacity } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
-export default function Introduction() {
+export default function Introduction({navigation}) {
     return (
         <View style={styles.container}>
             <ImageBackground
@@ -14,16 +14,15 @@ export default function Introduction() {
                <View style={styles.overlay}>
                     <Text style={styles.logo}>CafeMoring ☕🌸</Text>
                 </View>
-                <View style={styles.overlay1}>
-                    <Text style={styles.cat}>Austhetic Ideas</Text>
-                </View>
-                <View style={styles.overlay1}>
-                    <Text style={styles.cat}>Recepies</Text>
-                </View>
+                <TouchableOpacity style={styles.overlay1} onPress={() => navigation.navigate('Aesthetic')}>  
+                    <Text style={styles.cat}>Aesthetic Images</Text>
+                </TouchableOpacity>
+                 <TouchableOpacity style={styles.overlay1} onPress={() => navigation.navigate('Recipes')}>  
+                    <Text style={styles.cat}>Recipes</Text>
+                </TouchableOpacity>
                  <View style={styles.overlay1}>
-                    <Text style={styles.cat}>Cafes areas</Text>
+                    <Text style={styles.cat}>Cafe music palylist</Text>
                 </View>
-
             </ImageBackground>
         </View>
     );
@@ -67,7 +66,7 @@ const styles = StyleSheet.create({
         marginBottom:10
     },
      cat: {
-        fontSize: 25,
+        fontSize: 20,
         color: '#0202029a',
         fontWeight: 'bold',
     },
