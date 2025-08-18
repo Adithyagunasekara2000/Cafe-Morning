@@ -19,3 +19,4 @@ Expo (for development and testing)
 React Navigation
 
 Figma prototype: [View Here](https://www.figma.com/proto/FSfpoYkomrPjwGGiu7cD94/Untitled?node-id=1-2&p=f&t=OdGHVXD1IPN9L6tm-1&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=1%3A2&show-proto-sidebar=1)
+<img width="410" height="784" alt="image" src="https://github.com/user-attachments/assets/1427a3d1-4575-4971-b86e-f8b0c0ef2df0" />
