@@ -8,5 +8,5 @@ import com.example.demo.model.User;
 @Repository
 public interface userRepository extends JpaRepository<User, Integer> {
 	boolean existsByEmail(String email);
-	
+	 User findByEmail(String email);
 }
