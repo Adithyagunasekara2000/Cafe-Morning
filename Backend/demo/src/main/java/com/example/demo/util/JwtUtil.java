@@ -23,7 +23,7 @@ public class JwtUtil {
         this.expirationTime = expirationTime;
     }
 
-    // Generate JWT token
+  
     public String generateToken(String email) {
         return Jwts.builder()
                 .setSubject(email)
@@ -33,23 +33,22 @@ public class JwtUtil {
                 .compact();
     }
 
-    // Extract email (subject) from token
+   
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
-    // Extract expiration date
+   
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    // Extract a single claim
+    
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
-    // Validate token
     public boolean validateToken(String token, String email) {
         return (extractEmail(token).equals(email) && !isTokenExpired(token));
     }

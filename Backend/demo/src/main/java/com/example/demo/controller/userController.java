@@ -22,7 +22,7 @@ public class userController {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private JwtUtil jwtUtil;  // Inject JwtUtil
+    private JwtUtil jwtUtil;  
 
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestBody RegisterRequest request) {
@@ -51,7 +51,7 @@ public class userController {
             return ResponseEntity.status(401).body("Invalid credentials");
         }
         
-        // Use the injected jwtUtil instance
+        
         String token = jwtUtil.generateToken(user.getEmail());
         return ResponseEntity.ok("Bearer " + token);
     }

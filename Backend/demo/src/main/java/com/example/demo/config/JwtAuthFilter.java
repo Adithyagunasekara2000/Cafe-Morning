@@ -1,5 +1,7 @@
 package com.example.demo.config;
 
+import com.example.demo.model.User;
+import com.example.demo.repository.userRepository;
 import com.example.demo.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,12 +16,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Optional;
 
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     @Autowired
-    private JwtUtil jwtUtil;  // Inject JwtUtil as a dependency
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private userRepository userRepository;  
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -31,19 +37,22 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String jwt = authHeader.substring(7);
             try {
-                String email = jwtUtil.extractEmail(jwt);  // Use instance method
-                
-                // Validate the token
+                String email = jwtUtil.extractEmail(jwt);
+
                 if (email != null && jwtUtil.validateToken(jwt, email)) {
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                	User user = userRepository.findByEmail(email);
+
+                	if (user != null && jwtUtil.validateToken(jwt, email)) {
+                	    UsernamePasswordAuthenticationToken authentication =
+                	            new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+                	    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                	    SecurityContextHolder.getContext().setAuthentication(authentication);
+                	}
+
+
                 }
             } catch (Exception e) {
-                // Log the error but don't return error response here
-                // Let the request continue to handle authentication naturally
                 System.out.println("JWT parsing error: " + e.getMessage());
             }
         }

@@ -1,9 +1,12 @@
 package com.example.demo.model;
 
+import java.util.List;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 
 @Entity
 public class User {
@@ -14,6 +17,10 @@ public class User {
 	private String name;
 	private String email;
 	private String password;
+	
+	
+	@OneToMany(mappedBy="user")
+	private List<Post>posts;
 	
 	public User() {
 		
