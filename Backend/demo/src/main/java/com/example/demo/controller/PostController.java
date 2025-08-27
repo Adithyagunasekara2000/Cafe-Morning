@@ -39,14 +39,14 @@ public class PostController {
             Authentication authentication 
     ) {
         try {
-            // Check if user is authenticated
+            
             if (authentication == null || authentication.getPrincipal() == null) {
                 return ResponseEntity.status(401).body("User not authenticated");
             }
             
             User currentUser = (User) authentication.getPrincipal();
             
-            // Validate input
+           
             if (caption == null || caption.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body("Caption is required");
             }
@@ -59,12 +59,12 @@ public class PostController {
                 return ResponseEntity.badRequest().body("Image is required");
             }
             
-            // Check file size (5MB limit)
+           
             if (image.getSize() > 5 * 1024 * 1024) {
                 return ResponseEntity.badRequest().body("File size too large. Maximum 5MB allowed.");
             }
             
-            // Check file type
+            
             String contentType = image.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity.badRequest().body("Only image files are allowed");
@@ -113,7 +113,7 @@ public class PostController {
         }
     }
     
-    // New endpoint to serve images
+   
     @GetMapping("/images/{fileName:.+}")
     public ResponseEntity<Resource> getImage(@PathVariable String fileName) {
         try {
@@ -121,7 +121,7 @@ public class PostController {
             Resource resource = new UrlResource(filePath.toUri());
             
             if (resource.exists() && resource.isReadable()) {
-                // Determine content type
+              
                 String contentType = "image/jpeg"; // default
                 if (fileName.toLowerCase().endsWith(".png")) {
                     contentType = "image/png";
@@ -153,17 +153,17 @@ public class PostController {
                 return ResponseEntity.notFound().build();
             }
             
-            // Check if current user owns this post
+    
             if (!post.getUser().getId().equals(currentUser.getId())) {
                 return ResponseEntity.status(403).body("You can only delete your own posts");
             }
             
-            // Delete the image file
+           
             if (post.getImagePath() != null) {
                 fileStorageService.deleteFile(post.getImagePath());
             }
             
-            // Delete the post from database
+          
             postRepository.delete(post);
             
             return ResponseEntity.ok("Post deleted successfully");

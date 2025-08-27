@@ -9,53 +9,86 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class FileStorageService {
     
-    // This will create an 'uploads' folder in your project directory
-    // You can change this path in application.properties
+    
     @Value("${file.upload-dir:uploads}")
     private String uploadDir;
     
-    public String storeFile(MultipartFile file) throws IOException {
-        // Create uploads directory if it doesn't exist
-        Path uploadPath = Paths.get(uploadDir);
+    // Supported audio formats
+    private static final List<String> SUPPORTED_AUDIO_TYPES = Arrays.asList(
+        "audio/mpeg",        
+        "audio/wav",         
+        "audio/ogg",         
+        "audio/mp4",         
+        "audio/aac",         
+        "audio/flac",        
+        "audio/x-ms-wma"     
+    );
+    
+    // Supported image formats
+    private static final List<String> SUPPORTED_IMAGE_TYPES = Arrays.asList(
+        "image/jpeg",
+        "image/jpg", 
+        "image/png",
+        "image/gif",
+        "image/webp"
+    );
+    
+    public String storeFile(MultipartFile file, String subDirectory) throws IOException {
+      
+        Path uploadPath = Paths.get(uploadDir, subDirectory);
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
         
-        // Generate unique filename
+       
         String originalFileName = file.getOriginalFilename();
         String fileExtension = "";
         if (originalFileName != null && originalFileName.contains(".")) {
             fileExtension = originalFileName.substring(originalFileName.lastIndexOf("."));
         }
         
-        // Create unique filename using UUID
+      
         String uniqueFileName = UUID.randomUUID().toString() + fileExtension;
         
-        // Full path where file will be stored
         Path targetLocation = uploadPath.resolve(uniqueFileName);
         
-        // Copy file to target location
         Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
         
-        return uniqueFileName; // Return just the filename, not full path
+        return subDirectory + "/" + uniqueFileName; 
     }
     
-    public void deleteFile(String fileName) {
+   
+    public String storeFile(MultipartFile file) throws IOException {
+        return storeFile(file, "images");
+    }
+    
+    public boolean isValidImageFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && SUPPORTED_IMAGE_TYPES.contains(contentType.toLowerCase());
+    }
+    
+    public boolean isValidAudioFile(MultipartFile file) {
+        String contentType = file.getContentType();
+        return contentType != null && SUPPORTED_AUDIO_TYPES.contains(contentType.toLowerCase());
+    }
+    
+    public void deleteFile(String filePath) {
         try {
-            Path filePath = Paths.get(uploadDir).resolve(fileName);
-            Files.deleteIfExists(filePath);
+            Path fullPath = Paths.get(uploadDir).resolve(filePath);
+            Files.deleteIfExists(fullPath);
         } catch (IOException e) {
-            // Log the error but don't throw exception
-            System.err.println("Could not delete file: " + fileName + " - " + e.getMessage());
+            System.err.println("Could not delete file: " + filePath + " - " + e.getMessage());
         }
     }
     
-    public Path getFilePath(String fileName) {
-        return Paths.get(uploadDir).resolve(fileName);
+    public Path getFilePath(String filePath) {
+        return Paths.get(uploadDir).resolve(filePath);
     }
 }
