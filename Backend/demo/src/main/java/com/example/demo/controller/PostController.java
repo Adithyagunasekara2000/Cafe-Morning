@@ -70,20 +70,20 @@ public class PostController {
                 return ResponseEntity.badRequest().body("Only image files are allowed");
             }
             
-            // Store file and get filename
+            
             String fileName = fileStorageService.storeFile(image);
             
-            // Create post entity
+          
             Post post = new Post();
             post.setCaption(caption.trim());
             post.setLocation(location.trim());
-            post.setImagePath(fileName); // Store filename instead of bytes
+            post.setImagePath(fileName);
             post.setOriginalFileName(image.getOriginalFilename());
             post.setUser(currentUser);
             
             Post savedPost = postRepository.save(post);
             
-            // Return success response
+           
             Map<String, Object> response = new HashMap<>();
             response.put("id", savedPost.getId());
             response.put("caption", savedPost.getCaption());

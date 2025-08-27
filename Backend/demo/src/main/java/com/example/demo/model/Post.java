@@ -19,7 +19,7 @@ public class Post {
     
     private String originalFileName;
     
-    // Add timestamp for when post was created
+    
     private LocalDateTime createdAt;
     
     @ManyToOne
@@ -30,7 +30,7 @@ public class Post {
         this.createdAt = LocalDateTime.now();
     }
     
-    // Getters and Setters
+    
     public Long getId() {
         return id;
     }
