@@ -10,17 +10,41 @@ export default function Registration ({ navigation }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
-  const handleRegister = () => {
-    if (!email || !fullName || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill all fields');
-    } else if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-    } else {
-      // Replace with backend logic
-      Alert.alert('Success', 'Account created!');
-      navigation.navigate('Login');
+const handleRegister = async () => {
+  if (!email || !fullName || !password || !confirmPassword) {
+    Alert.alert('Error', 'Please fill all fields');
+  } else if (password !== confirmPassword) {
+    Alert.alert('Error', 'Passwords do not match');
+  } else {
+    try {
+      const response = await fetch("http://localhost:8080/api/auth/register", {  
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: fullName,
+          email: email,
+          password: password,
+          confirmPassword: confirmPassword,
+        }),
+      });
+
+      const data = await response.text();
+
+      if (response.ok) {
+        Alert.alert("Success", data);
+        navigation.navigate("Login");
+      } else {
+        Alert.alert("Error", data);
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Something went wrong. Check your connection.");
     }
-  };
+  }
+};
+
 
   return (
     <View style={styles.container}>

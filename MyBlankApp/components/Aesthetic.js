@@ -6,411 +6,194 @@ import {
   View,
   TouchableOpacity,
   Alert,
-  Dimensions,
-  StatusBar,
+  TextInput,
   ActivityIndicator,
-  Platform,
+  ScrollView,
 } from "react-native";
-import { Asset } from "expo-asset";
-import { AntDesign, Feather, MaterialIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-
-const { width, height } = Dimensions.get("window");
+import * as ImagePicker from "expo-image-picker";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function AestheticCafe() {
-  const [liked, setLiked] = useState(false);
-  const [localUri, setLocalUri] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [downloading, setDownloading] = useState(false);
+  const [caption, setCaption] = useState("");
+  const [location, setLocation] = useState("");
+  const [pickedImage, setPickedImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [posts, setPosts] = useState([]);
+  const [loadingPosts, setLoadingPosts] = useState(false);
 
   useEffect(() => {
-    const loadAsset = async () => {
-      try {
-        const asset = Asset.fromModule(require("../assets/bg.jpg"));
-        await asset.downloadAsync();
-        setLocalUri(asset.localUri);
-      } catch (error) {
-        console.error("Error loading asset:", error);
-        // Fallback for web - use a placeholder image
-        setLocalUri("https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadAsset();
+    fetchPosts();
   }, []);
 
-  const handleDownload = async () => {
-    if (!localUri) {
-      Alert.alert("Error", "Image not available for download");
+ 
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setPickedImage(result.assets[0]); 
+    }
+  };
+
+ 
+  const handleUpload = async () => {
+    if (!pickedImage) {
+      Alert.alert("Error", "Please select an image first");
       return;
     }
 
-    setDownloading(true);
+    const token = await AsyncStorage.getItem("token");
+    if (!token) {
+      Alert.alert("Error", "You must be logged in to upload posts");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("caption", caption);
+    formData.append("location", location);
+    formData.append("image", {
+      uri: pickedImage.uri,
+      name: pickedImage.fileName || "post.jpg",
+      type: pickedImage.type || "image/jpeg",
+    });
 
     try {
-      if (Platform.OS === 'web') {
-        // Web-specific download logic
-        const response = await fetch(localUri);
-        const blob = await response.blob();
-        
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `aesthetic_cafe_${Date.now()}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-        
-        Alert.alert("✨ Success!", "Image downloaded to your Downloads folder");
-      } else {
-        // Mobile download logic (original code for when running on mobile)
-        const { MediaLibrary, FileSystem } = require('expo-media-library');
-        
-        const { status } = await MediaLibrary.requestPermissionsAsync();
-        if (status !== "granted") {
-          Alert.alert(
-            "Permission Required",
-            "Please grant media library permission to save images."
-          );
-          return;
-        }
+      setUploading(true);
+      const response = await fetch("http://localhost:8080/api/posts/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+        body: formData,
+      });
 
-        const timestamp = new Date().getTime();
-        const filename = `aesthetic_cafe_${timestamp}.jpg`;
-        const fileUri = `${FileSystem.documentDirectory}${filename}`;
-
-        await FileSystem.copyAsync({
-          from: localUri,
-          to: fileUri,
-        });
-
-        const asset = await MediaLibrary.createAssetAsync(fileUri);
-        await MediaLibrary.createAlbumAsync("Aesthetic Cafe", asset, false);
-
-        Alert.alert(
-          "✨ Success!",
-          "Image saved to your gallery in 'Aesthetic Cafe' album"
-        );
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "Upload failed");
       }
-    } catch (error) {
-      console.error("Download error:", error);
-      Alert.alert("❌ Download Failed", "Could not save image");
+
+      const data = await response.json();
+      Alert.alert("Success", "Post uploaded!");
+      setPickedImage(null);
+      setCaption("");
+      setLocation("");
+      fetchPosts(); 
+    } catch (err) {
+      console.error("Upload error:", err.message);
+      Alert.alert("Error", err.message);
     } finally {
-      setDownloading(false);
+      setUploading(false);
     }
   };
 
-  const handleLike = () => {
-    setLiked(!liked);
-  };
-
-  const handleShare = async () => {
+  const fetchPosts = async () => {
+    setLoadingPosts(true);
     try {
-      if (Platform.OS === 'web') {
-        if (navigator.share) {
-          await navigator.share({
-            title: 'Aesthetic Cafe',
-            text: 'Check out this beautiful aesthetic image!',
-            url: localUri,
-          });
-        } else {
-          // Fallback for browsers without native share
-          await navigator.clipboard.writeText(localUri);
-          Alert.alert("✨ Copied!", "Image URL copied to clipboard");
-        }
-      } else {
-        // Mobile share logic would go here
-        Alert.alert("Share", "Share functionality for mobile");
-      }
+      const response = await fetch("http://localhost:8080/api/posts/all");
+      const data = await response.json();
+      setPosts(data);
     } catch (error) {
-      console.log("Share error:", error);
+      console.error("Fetch posts error:", error);
+    } finally {
+      setLoadingPosts(false);
     }
   };
-
-  if (loading) {
-    return (
-      <LinearGradient colors={["#b76196ff", "#eac0e6ff", "#c0bbbfff"]} style={styles.container}>
-        <StatusBar barStyle="light-content" />
-        <ActivityIndicator size="large" color="#FFD700" />
-        <Text style={styles.loadingText}>Loading beautiful images...</Text>
-      </LinearGradient>
-    );
-  }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Aesthetic Cafe</Text>
-      </View>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Upload a Post</Text>
 
-      <Text style={styles.subtitle}>Discover Beautiful Moments</Text>
+      <TextInput
+        placeholder="Enter caption"
+        value={caption}
+        onChangeText={setCaption}
+        style={styles.input}
+      />
+      <TextInput
+        placeholder="Enter location"
+        value={location}
+        onChangeText={setLocation}
+        style={styles.input}
+      />
 
-      {/* Platform indicator */}
-      <View style={styles.platformIndicator}>
-        <Text style={styles.platformText}>
-          Running on {Platform.OS} • {Platform.OS === 'web' ? 'Web Download Available' : 'Mobile Gallery Save'}
-        </Text>
-      </View>
+      <TouchableOpacity onPress={pickImage} style={styles.button}>
+        <Text style={styles.buttonText}>Select Image</Text>
+      </TouchableOpacity>
 
-      {/* Main Image Container */}
-      {localUri && (
-        <View style={styles.imageWrapper}>
-          <View style={styles.imageContainer}>
-            <Image source={{ uri: localUri }} style={styles.image} resizeMode="cover" />
-            
-            {/* Gradient Overlay */}
-            <LinearGradient
-              colors={["transparent", "rgba(0,0,0,0.7)"]}
-              style={styles.gradientOverlay}
-            />
-
-            {/* Action Buttons */}
-            <View style={styles.actionButtons}>
-              <TouchableOpacity
-                style={[styles.actionButton, liked && styles.likedButton]}
-                onPress={handleLike}
-                activeOpacity={0.7}
-              >
-                <AntDesign
-                  name={liked ? "heart" : "hearto"}
-                  size={24}
-                  color={liked ? "#ff6b6b" : "white"}
-                />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.actionButton}
-                onPress={handleShare}
-                activeOpacity={0.7}
-              >
-                <Feather name="share-2" size={24} color="white" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.actionButton, downloading && styles.downloadingButton]}
-                onPress={handleDownload}
-                activeOpacity={0.7}
-                disabled={downloading}
-              >
-                {downloading ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <Feather name="download" size={24} color="white" />
-                )}
-              </TouchableOpacity>
-            </View>
-
-            {/* Image Info */}
-            <View style={styles.imageInfo}>
-              <Text style={styles.imageTitle}>Aesthetic Moment</Text>
-              <Text style={styles.imageDescription}>
-                Captured beauty • Tap ❤️ to like • ⬇️ to {Platform.OS === 'web' ? 'download' : 'save'}
-              </Text>
-            </View>
-          </View>
-        </View>
+      {/* Preview selected image */}
+      {pickedImage && (
+        <Image
+          source={{ uri: pickedImage.uri }}
+          style={styles.previewImage}
+        />
       )}
 
-      {/* Bottom Stats */}
-      <View style={styles.stats}>
-        <View style={styles.statItem}>
-          <AntDesign name="heart" size={20} color="#ff6b6b" />
-          <Text style={styles.statText}>{liked ? "1" : "0"} Likes</Text>
-        </View>
-        <View style={styles.statItem}>
-          <Feather name="eye" size={20} color="#4ecdc4" />
-          <Text style={styles.statText}>Beautiful</Text>
-        </View>
-        <View style={styles.statItem}>
-          <MaterialIcons name="devices" size={20} color="#FFD700" />
-          <Text style={styles.statText}>{Platform.OS}</Text>
-        </View>
-      </View>
-
-      {/* Instructions */}
-      <View style={styles.instructions}>
-        <Text style={styles.instructionTitle}>💡 How it works:</Text>
-        <Text style={styles.instructionText}>
-          {Platform.OS === 'web' 
-            ? "• Click download to save to your Downloads folder\n• Use share to copy link or share natively\n• For mobile experience, run on device/emulator"
-            : "• Download saves to gallery\n• Share opens native sharing\n• Images saved in 'Aesthetic Cafe' album"
-          }
+      <TouchableOpacity
+        onPress={handleUpload}
+        style={[styles.button, uploading && { opacity: 0.7 }]}
+        disabled={uploading}
+      >
+        <Text style={styles.buttonText}>
+          {uploading ? "Uploading..." : "Upload Post"}
         </Text>
-      </View>
-    </View>
+      </TouchableOpacity>
+
+      <Text style={styles.feedTitle}>All Posts</Text>
+
+      {loadingPosts ? (
+        <ActivityIndicator size="large" color="#000" />
+      ) : (
+        posts.map((post) => (
+          <View key={post.id} style={styles.postCard}>
+            {post.imagePath && (
+              <Image
+                source={{ uri: `http://localhost:8080/api/posts/images/${post.imagePath}` }}
+                style={styles.postImage}
+              />
+            )}
+            <Text style={styles.postCaption}>{post.caption}</Text>
+            <Text style={styles.postLocation}>📍 {post.location}</Text>
+          </View>
+        ))
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    paddingTop: Platform.OS === 'web' ? 20 : (StatusBar.currentHeight || 40),
-    paddingBottom: 20,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 20,
+  container: { padding: 20, alignItems: "center" },
+  title: { fontSize: 22, fontWeight: "bold", marginBottom: 10 },
+  input: {
+    width: "95%",
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 10,
+    padding: 10,
     marginBottom: 10,
   },
-  title: {
-    fontSize: 28,
-    color: "#FFD700",
-    fontWeight: "bold",
-    marginHorizontal: 15,
-    ...(Platform.OS === 'web' && {
-      textShadow: "1px 1px 3px rgba(0,0,0,0.3)"
-    }),
+  button: {
+    backgroundColor: "#FFD700",
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 10,
+    width: "95%",
+    alignItems: "center",
   },
-  subtitle: {
-    fontSize: 16,
-    color: "#a8a8a8",
+  buttonText: { fontWeight: "bold", color: "white" },
+  previewImage: { width: 200, height: 200, borderRadius: 15, marginVertical: 10 },
+  feedTitle: { fontSize: 20, fontWeight: "bold", marginVertical: 20 },
+  postCard: {
+    width: "95%",
+    backgroundColor: "#fff",
+    padding: 10,
     marginBottom: 15,
-    fontStyle: "italic",
+    borderRadius: 10,
+    elevation: 3,
   },
-  platformIndicator: {
-    backgroundColor: "rgba(255,215,0,0.1)",
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255,215,0,0.3)",
-  },
-  platformText: {
-    color: "#FFD700",
-    fontSize: 12,
-    fontWeight: "500",
-  },
-  loadingText: {
-    color: "#FFD700",
-    marginTop: 20,
-    fontSize: 16,
-  },
-  imageWrapper: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  imageContainer: {
-    width: Math.min(width * 0.85, 400),
-    height: Math.min(height * 0.4, 300),
-    borderRadius: 20,
-    overflow: "hidden",
-    position: "relative",
-    ...(Platform.OS === 'web' && {
-      boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-    }),
-    ...(Platform.OS !== 'web' && {
-      elevation: 8,
-      shadowColor: "#000",
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 4.65,
-    }),
-  },
-  image: {
-    width: "100%",
-    height: "100%",
-  },
-  gradientOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: "50%",
-  },
-  actionButtons: {
-    position: "absolute",
-    top: 15,
-    right: 15,
-    flexDirection: "column",
-    gap: 12,
-  },
-  actionButton: {
-    backgroundColor: "rgba(0,0,0,0.6)",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: "center",
-    alignItems: "center",
-    ...(Platform.OS === 'web' && {
-      cursor: "pointer",
-      backdropFilter: "blur(10px)",
-    }),
-  },
-  likedButton: {
-    backgroundColor: "rgba(255,107,107,0.2)",
-  },
-  downloadingButton: {
-    backgroundColor: "rgba(78,205,196,0.3)",
-  },
-  imageInfo: {
-    position: "absolute",
-    bottom: 20,
-    left: 20,
-    right: 80,
-  },
-  imageTitle: {
-    color: "white",
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 5,
-    ...(Platform.OS === 'web' && {
-      textShadow: "1px 1px 3px rgba(0,0,0,0.8)",
-    }),
-  },
-  imageDescription: {
-    color: "#e0e0e0",
-    fontSize: 14,
-    opacity: 0.9,
-    ...(Platform.OS === 'web' && {
-      textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
-    }),
-  },
-  stats: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: Math.min(width * 0.8, 300),
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  statItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  statText: {
-    color: "#a8a8a8",
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  instructions: {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 15,
-    padding: 20,
-    marginHorizontal: 20,
-    maxWidth: 400,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-  },
-  instructionTitle: {
-    color: "#FFD700",
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 10,
-    textAlign: "center",
-  },
-  instructionText: {
-    color: "#a8a8a8",
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: "left",
-  },
+  postImage: { width: "100%", height: 200, borderRadius: 10 },
+  postCaption: { fontSize: 16, fontWeight: "bold", marginTop: 8 },
+  postLocation: { fontSize: 14, color: "gray", marginTop: 4 },
 });

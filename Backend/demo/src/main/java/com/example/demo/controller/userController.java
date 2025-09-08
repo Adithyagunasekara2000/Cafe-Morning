@@ -13,6 +13,7 @@ import com.example.demo.util.JwtUtil;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins ="*")
 public class userController {
 
     @Autowired

@@ -22,9 +22,11 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/register", "/api/auth/login", "/api/posts/upload").permitAll()
-                .anyRequest().authenticated()
-            )
+            	    .requestMatchers("/api/auth/**").permitAll()                
+            	    .requestMatchers("/api/posts/all").permitAll()            
+            	    .requestMatchers("/api/posts/upload").authenticated()      
+            	)
+
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
             .formLogin(login -> login.disable())
             .httpBasic(basic -> basic.disable())
